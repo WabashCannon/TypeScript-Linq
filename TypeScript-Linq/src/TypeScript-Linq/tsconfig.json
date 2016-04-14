@@ -1,0 +1,18 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "target": "es5",
+    "outDir": "wwwroot/scripts/",
+    "pretty": true
+  },
+  "exclude": [
+    "node_modules",
+    "wwwroot",
+    "typings/browser",
+    "typings/browser.d.ts"
+  ]
+}
