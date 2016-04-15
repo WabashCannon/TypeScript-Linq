@@ -2,7 +2,6 @@
 
 type predicate<T> = (T) => boolean;
 
-
 declare global {
     interface Array<T> {
         single(): T;
@@ -13,6 +12,14 @@ declare global {
         where(lambda: predicate<T>): Array<T>;
         distinct(lambda?: (a: T, b: T) => boolean): Array<T>;
         count(lambda?: predicate<T>): number;
+        remove(item: T);
+    }
+}
+
+Array.prototype.remove = function (item) {
+    const ndx = this.indexOf(item);
+    if (ndx >= 0) {
+        this.splice(ndx, 1);
     }
 }
 
