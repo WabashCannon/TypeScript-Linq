@@ -2,6 +2,11 @@
 
 type predicate<T> = (T) => boolean;
 
+interface KeyValuePair<K, T> {
+    key: K;
+    value: T;
+}
+
 interface KeyArrayPair<K, T> {
     key: K;
     array: Array<T>;
@@ -41,6 +46,15 @@ declare global {
          * and arrays of elements that map to respective keys
          */
         groupBy<R>(lambda: (elem: T) => R): Array<KeyArrayPair<R, T>>;
+        /**
+         * Joins an element of the provided array to each element of this array
+         * @param otherArray Array of elements to join to elements in this array
+         * @param selfKeyLambda Lambda that maps elements of this array into their joining key
+         * @param otherKeyLambda Lambda that maps elements of the other array into their joining key
+         * @param pairMap Lambda that maps an element from each array into a joined object
+         * @returns An array of joined elements as returned from the pair mapping lambda
+         */
+        singleJoin<R, K, O>(otherArray: Array<R>, selfKeyLambda: (T) => K, otherKeyLambda: (R) => K, pairMap: (T, R) => O): Array<O>;
     }
 }
 
@@ -258,3 +272,26 @@ Array.prototype.groupBy = function <K>(lambda: (t: any) => K): Array<KeyArrayPai
         return result;
     };
 })();
+
+Array.prototype.singleJoin = function <R, K, O>(otherArray: Array<R>, selfKeyLambda: (any) => K, otherKeyLambda: (R) => K, pairMap: (any, R) => O): Array<O> {
+    //Generate list for looking up right elements by keys. This ensures that otherKeyLambda is only
+    //called only otherArray.length times at a slight memory cost
+    var rightKeyMappings = new Array<KeyValuePair<K, R>>();
+    for (var rightElem of otherArray) {
+        rightKeyMappings.push({
+            key: otherKeyLambda(rightElem),
+            value: rightElem
+        });
+    }
+
+    //For each element of this, join with the first match in the other array
+    var results = new Array<O>();
+    for (var leftElem of this) {
+        var key = selfKeyLambda(leftElem);
+        var rightElem = rightKeyMappings.first(pair => pair.key == key).value;
+        var result = pairMap(leftElem, rightElem);
+        results.push(result);
+    }
+
+    return results;
+}

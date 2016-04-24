@@ -26,6 +26,12 @@ describe('Linq Tests',
             { id: 2, name: 'cheese' }
         ];
 
+        var testJoinArray: ITarget[] = [
+            { id: 0, name: 'fruit' },
+            { id: 1, name: 'vegetable' },
+            { id: 2, name: 'dairy' }
+        ];
+
         it('Array.remove removes an item.', () => {
 
             var ta: ITarget[] = [
@@ -74,8 +80,7 @@ describe('Linq Tests',
                 var target = a.single();
             }).toThrow('Collection has no items.');
         });
-
-
+        
         it('Array.single throws exception if there are more than one records', () => {
             expect(() => {
                 var target = testArray.single();
@@ -156,8 +161,7 @@ describe('Linq Tests',
             var target = localArray.distinct() as any[];
             expect(target.length).toEqual(6);
         });
-
-
+        
         it('Array.count returns the number of items that match a predicate', () => {
             var target = testArray.count(x => x.name[1] === 'a');
             expect(target).toEqual(3);
@@ -329,5 +333,67 @@ describe('Linq Tests',
             expectTargetToHaveCorrectGroup(0);
             expectTargetToHaveCorrectGroup(1);
             expectTargetToHaveCorrectGroup(2);
+        });
+
+        it('Array.singleJoin has correct number of elements on joining larger to smaller', () => {
+            var left = testGroupArray;
+            var right = testJoinArray;
+
+            var leftKeyLambda = x => x.id;
+            var rightKeyLambda = x => x.id;
+            var joinLambda = (item, category) => {
+                return {
+                    item: item.name,
+                    category: category.name
+                };
+            };
+
+            var target = left.singleJoin(right, leftKeyLambda, rightKeyLambda, joinLambda);
+            expect(target.count()).toBe(left.length);
+        });
+
+        it('Array.singleJoin has correct number of elements on joining smaller to larger', () => {
+            var left = testJoinArray;
+            var right = testGroupArray;
+
+            var leftKeyLambda = x => x.id;
+            var rightKeyLambda = x => x.id;
+            var joinLambda = (item, category) => {
+                return {
+                    item: item.name,
+                    category: category.name
+                };
+            };
+
+            var target = left.singleJoin(right, leftKeyLambda, rightKeyLambda, joinLambda);
+            expect(target.count()).toBe(left.length);
+        });
+
+        it('Array.singleJoin has correct elements on join', () => {
+            var left = testGroupArray;
+            var right = testJoinArray;
+
+            var leftKeyLambda = x => x.id;
+            var rightKeyLambda = x => x.id;
+            var joinLambda = (item, category) => {
+                return {
+                    item: item.name,
+                    category: category.name
+                };
+            };
+
+            var expected = [
+                { item: 'apple', category: 'fruit' },
+                { item: 'bananna', category: 'fruit' },
+                { item: 'orange', category: 'fruit' },
+                { item: 'carrot', category: 'vegetable' },
+                { item: 'squash', category: 'vegetable' },
+                { item: 'corn', category: 'vegetable' },
+                { item: 'milk', category: 'dairy' },
+                { item: 'cheese', category: 'dairy' }
+            ];
+
+            var target = left.singleJoin(right, leftKeyLambda, rightKeyLambda, joinLambda);
+            expect(JSON.stringify(target)).toBe(JSON.stringify(expected));
         });
     });
