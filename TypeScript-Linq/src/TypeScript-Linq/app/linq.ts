@@ -2,6 +2,11 @@
 
 type predicate<T> = (T) => boolean;
 
+interface KeyArrayPair<K, T> {
+    key: K;
+    array: Array<T>;
+}
+
 declare global {
     interface Array<T> {
         single(): T;
@@ -29,6 +34,13 @@ declare global {
          * @returns The sum of lambda(element) over each element in the array
          */
         sum<R>(lambda?: (elem: T) => R): R;
+        /**
+         * Groups the elements of the array into KeyArrayPairs with each element's key provided by lambda(elem).
+         * @param lambda Method that generates the group key from an element in the array
+         * @returns An array of KeyArrayPair values with keys corresponding to the results of the provided lambda
+         * and arrays of elements that map to respective keys
+         */
+        groupBy<R>(lambda: (elem: T) => R): Array<KeyArrayPair<R, T>>;
     }
 }
 
@@ -53,7 +65,7 @@ Array.prototype.single = function () {
 }
 
 Array.prototype.first = function (lambda?: predicate<any>) {
-    if (!lambda && length > 0) {
+    if (!lambda && this.length > 0) {
         return this[0];
     }
     for (var x of this) {
@@ -142,4 +154,29 @@ Array.prototype.sum = function <R>(lambda?: (elem: any) => R): R {
     }
 
     return sum;
+}
+
+Array.prototype.groupBy = function <K>(lambda: (t: any) => K): Array<KeyArrayPair<any, K>> {
+    var result = new Array<KeyArrayPair<K, any>>();
+
+    for (var elem of this) {
+        var key = lambda(elem);
+
+        //Get the KeyArrayPair corresponding to the current key
+        var pair = result.where(pair => pair.key == key)
+            .first();
+
+        if (!pair) {
+            //If the KeyArrayPair doesn't exist, create one and add it
+            var newPair: KeyArrayPair<K, any> = {
+                key: key,
+                array: [elem]
+            }
+            result.push(newPair);
+        } else {
+            //Otherwise, add the element to the existing KeyArrayPair's array
+            pair.array.push(elem);
+        }
+    }
+    return result;
 }

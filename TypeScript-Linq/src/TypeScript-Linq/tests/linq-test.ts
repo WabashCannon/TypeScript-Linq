@@ -15,6 +15,17 @@ describe('Linq Tests',
             { id: 5, name: 'fig' }
         ];
 
+        var testGroupArray: ITarget[] = [
+            { id: 0, name: 'apple' },
+            { id: 0, name: 'bananna' },
+            { id: 0, name: 'orange' },
+            { id: 1, name: 'carrot' },
+            { id: 1, name: 'squash' },
+            { id: 1, name: 'corn' },
+            { id: 2, name: 'milk' },
+            { id: 2, name: 'cheese' }
+        ];
+
         it('Array.remove removes an item.', () => {
 
             var ta: ITarget[] = [
@@ -79,6 +90,11 @@ describe('Linq Tests',
         it('Array.first returns null when predicate matches nothing.', () => {
             var target = testArray.first(() => false);
             expect(target).toBeNull();
+        });
+
+        it('Array.first returns null for an empty array', () => {
+            var target = [];
+            expect(target.first()).toBeNull();
         });
 
         it('Array.indexOfFirst returns correct index.', () => {
@@ -193,6 +209,40 @@ describe('Linq Tests',
             var getName = (elem: ITarget): string => elem.name;
             var target = testArray.sum(getName);
             expect(target).toEqual('applebanannacarrotdateeggfig');
+        });
+
+        it('Array.groupBy has correct number of groups', () => {
+            var getId = (elem: ITarget): number => elem.id;
+            var target = testGroupArray.groupBy(getId);
+
+            expect(target.count()).toEqual(3);           
+        });
+
+        it('Array.groupBy has correct groups', () => {
+            var getId = (elem: ITarget): number => elem.id;
+            var target = testGroupArray.groupBy(getId);
+
+            //Define some utility functions for legible testing
+            var groupHasKey = (key: number) => {
+                return (group) => { return group.key == key; };
+            };
+            var targetHasId = (id: number) => {
+                return (target) => { return target.id == id; };
+            };
+            var expectTargetToHaveCorrectGroup = (key: number) => {
+                expect(
+                    target
+                        .first(groupHasKey(0))
+                        .array
+                ).toEqual(
+                    testGroupArray
+                        .where(targetHasId(0))
+                    );
+            };
+
+            expectTargetToHaveCorrectGroup(0);
+            expectTargetToHaveCorrectGroup(1);
+            expectTargetToHaveCorrectGroup(2);
         });
 
     });
