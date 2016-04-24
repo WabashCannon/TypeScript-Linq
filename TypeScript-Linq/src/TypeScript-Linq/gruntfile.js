@@ -15,9 +15,9 @@ module.exports = function (grunt) {
         },
         'jasmine': {
             'default': {
-                src: 'app/linq.js',
+                src: 'wwwroot/scripts/app/linq.js',
                 options: {
-                    specs: 'tests/linq-test.js'
+                    specs: 'wwwroot/scripts/tests/linq-test.js'
                 }
             }
         }
