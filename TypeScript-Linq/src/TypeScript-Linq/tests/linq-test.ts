@@ -245,23 +245,32 @@ describe('Linq Tests',
             expectTargetToHaveCorrectGroup(2);
         });
 
-        it('Array.groupByHash has correct number of groups', () => {
-            var getId = (elem: ITarget): number => elem.id;
-            var target = testGroupArray.groupByHash(getId);
+        it('Array.groupBy non-hashable keys has correct groups', () => {
+            //Define some non-hashable keys
+            var groupKeys = [
+                { id: 1 },
+                { id: 2 },
+                { id: 3 }
+            ];
 
-            expect(target.count()).toEqual(3);
-        });
+            //Map the test group array to have ids that are the non-hashable keys
+            var testArray = testGroupArray.select(target => {
+                return {
+                    id: groupKeys[target.id],
+                    name: target.name
+                };
+            });
 
-        it('Array.groupByHash has correct groups', () => {
-            var getId = (elem: ITarget): number => elem.id;
-            var target = testGroupArray.groupByHash(getId);
+            //Group by the non-hashable keys
+            var getId = (elem: any): any => elem.id;
+            var target = testArray.groupBy(getId);
 
             //Define some utility functions for legible testing
-            var groupHasKey = (key: number) => {
-                return (group) => { return group.key == key; };
+            var groupHasKey = (keyNum) => {
+                return (group) => { return group.key == groupKeys[keyNum]; };
             };
-            var targetHasId = (id: number) => {
-                return (target) => { return target.id == id; };
+            var targetHasId = (idNum) => {
+                return (target) => { return target.id == groupKeys[idNum]; };
             };
             var expectTargetToHaveCorrectGroup = (key: number) => {
                 expect(
@@ -269,7 +278,7 @@ describe('Linq Tests',
                         .first(groupHasKey(0))
                         .array
                 ).toEqual(
-                    testGroupArray
+                    testArray
                         .where(targetHasId(0))
                     );
             };
@@ -279,4 +288,46 @@ describe('Linq Tests',
             expectTargetToHaveCorrectGroup(2);
         });
 
+        it('Array.groupBy non-hashable keys has correct groups when two keys are duck-type identical', () => {
+            //Define some non-hashable keys
+            var groupKeys = [
+                { id: 1 },
+                { id: 1 },
+                { id: 2 }
+            ];
+
+            //Map the test group array to have ids that are the non-hashable keys
+            var testArray = testGroupArray.select(target => {
+                return {
+                    id: groupKeys[target.id],
+                    name: target.name
+                };
+            });
+
+            //Group by the non-hashable keys
+            var getId = (elem: any): any => elem.id;
+            var target = testArray.groupBy(getId);
+
+            //Define some utility functions for legible testing
+            var groupHasKey = (keyNum) => {
+                return (group) => { return group.key == groupKeys[keyNum]; };
+            };
+            var targetHasId = (idNum) => {
+                return (target) => { return target.id == groupKeys[idNum]; };
+            };
+            var expectTargetToHaveCorrectGroup = (key: number) => {
+                expect(
+                    target
+                        .first(groupHasKey(0))
+                        .array
+                ).toEqual(
+                    testArray
+                        .where(targetHasId(0))
+                    );
+            };
+
+            expectTargetToHaveCorrectGroup(0);
+            expectTargetToHaveCorrectGroup(1);
+            expectTargetToHaveCorrectGroup(2);
+        });
     });

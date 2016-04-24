@@ -41,15 +41,6 @@ declare global {
          * and arrays of elements that map to respective keys
          */
         groupBy<R>(lambda: (elem: T) => R): Array<KeyArrayPair<R, T>>;
-        /**
-         * Groups the elements of the array into KeyArrayPairs with each element's key provided by lambda(elem).
-         * Identical to groupBy with optimizations made for string/number keys. Worst case runtime is O(n) as
-         * opposed to groupBy's O(n^2).
-         * @param lambda Method that generates the group/hash key from an element in the array
-         * @returns An array of KeyArrayPair values with keys corresponding to the results of the provided lambda
-         * and arrays of elements that map to respective keys
-         */
-        groupByHash(lambda: (elem: T) => string | number): Array<KeyArrayPair<string | number, T>>;
     }
 }
 
@@ -189,30 +180,81 @@ Array.prototype.groupBy = function <K>(lambda: (t: any) => K): Array<KeyArrayPai
     return result;
 }
 
-Array.prototype.groupByHash = function (lambda: (any) => string | number): Array<KeyArrayPair<string | number, any>> {
-    var hashTable = {};
-
-    for (var elem of this) {
-        var key = lambda(elem);
-
-        var pair = hashTable[key];
-        if (!pair) {
-            //If the KeyArrayPair doesn't exist, create one and add it
-            var newPair: KeyArrayPair<string | number, any> = {
-                key: key,
-                array: [elem]
+//Define groupBy in a closure to hide internal methods groupBy and groupByHash. By not declaring
+//the methods in the prototype we can avoid re-instantiating the sub-methods on every call
+;(() => {
+    Array.prototype.groupBy = function <K>(lambda: (t: any) => K): Array<KeyArrayPair<any, K>> {
+        // It's an imperfect check, but if the lambda of the first element returns a string or number,
+        // then the key type is hashable and the hash algorithm will be used to speed up performance.
+        // Note, that there is probably a way to convert non-hashable keys (simple example would be JSON.stringify)
+        // but this could cause unintended consequences (i.e. since {id: 0} != {id: 0}, hashing would be hard)
+        if (this.any()) {
+            var firstKeyType = typeof (lambda(this.first()));
+            if (firstKeyType == "string" || firstKeyType == "number") {
+                return groupByHash(this, <any>lambda);
             }
-            hashTable[key] = newPair;
-        } else {
-            //Otherwise, add the element to the existing KeyArrayPair hash table
-            pair.array.push(elem);
         }
+        return groupBy(this, lambda);
     }
 
-    //Convert hash table to array and return it
-    var result = [];
-    for (var hash in hashTable) {
-        result.push(hashTable[hash]);
+    function groupBy<K>(array: Array<any>, lambda: (t: any) => K): Array<KeyArrayPair<any, K>> {
+        var result = new Array<KeyArrayPair<K, any>>();
+
+        for (var elem of array) {
+            var key = lambda(elem);
+
+            //Get the KeyArrayPair corresponding to the current key
+            var pair = result.where(pair => pair.key == key)
+                .first();
+
+            if (!pair) {
+                //If the KeyArrayPair doesn't exist, create one and add it
+                var newPair: KeyArrayPair<K, any> = {
+                    key: key,
+                    array: [elem]
+                }
+                result.push(newPair);
+            } else {
+                //Otherwise, add the element to the existing KeyArrayPair's array
+                pair.array.push(elem);
+            }
+        }
+        return result;
     }
-    return result;
-}
+
+    /**
+    * Groups the elements of the array into KeyArrayPairs with each element's key provided by lambda(elem).
+    * Identical to groupBy with optimizations made for string/number keys. Worst case runtime is O(n) as
+    * opposed to groupBy's O(n^2).
+    * @param lambda Method that generates the group/hash key from an element in the array
+    * @returns An array of KeyArrayPair values with keys corresponding to the results of the provided lambda
+    * and arrays of elements that map to respective keys
+    */
+    function groupByHash(array: Array<any>, lambda: (any) => string | number): Array<KeyArrayPair<string | number, any>> {
+        var hashTable = {};
+
+        for (var elem of array) {
+            var key = lambda(elem);
+
+            var pair = hashTable[key];
+            if (!pair) {
+                //If the KeyArrayPair doesn't exist, create one and add it
+                var newPair: KeyArrayPair<string | number, any> = {
+                    key: key,
+                    array: [elem]
+                }
+                hashTable[key] = newPair;
+            } else {
+                //Otherwise, add the element to the existing KeyArrayPair hash table
+                pair.array.push(elem);
+            }
+        }
+
+        //Convert hash table to array and return it
+        var result = [];
+        for (var hash in hashTable) {
+            result.push(hashTable[hash]);
+        }
+        return result;
+    };
+})();
