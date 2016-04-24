@@ -41,6 +41,15 @@ declare global {
          * and arrays of elements that map to respective keys
          */
         groupBy<R>(lambda: (elem: T) => R): Array<KeyArrayPair<R, T>>;
+        /**
+         * Groups the elements of the array into KeyArrayPairs with each element's key provided by lambda(elem).
+         * Identical to groupBy with optimizations made for string/number keys. Worst case runtime is O(n) as
+         * opposed to groupBy's O(n^2).
+         * @param lambda Method that generates the group/hash key from an element in the array
+         * @returns An array of KeyArrayPair values with keys corresponding to the results of the provided lambda
+         * and arrays of elements that map to respective keys
+         */
+        groupByHash(lambda: (elem: T) => string | number): Array<KeyArrayPair<string | number, T>>;
     }
 }
 
@@ -50,7 +59,6 @@ Array.prototype.remove = function (item) {
         this.splice(ndx, 1);
     }
 }
-
 
 Array.prototype.single = function () {
     if (this.length === 1) {
@@ -177,6 +185,34 @@ Array.prototype.groupBy = function <K>(lambda: (t: any) => K): Array<KeyArrayPai
             //Otherwise, add the element to the existing KeyArrayPair's array
             pair.array.push(elem);
         }
+    }
+    return result;
+}
+
+Array.prototype.groupByHash = function (lambda: (any) => string | number): Array<KeyArrayPair<string | number, any>> {
+    var hashTable = {};
+
+    for (var elem of this) {
+        var key = lambda(elem);
+
+        var pair = hashTable[key];
+        if (!pair) {
+            //If the KeyArrayPair doesn't exist, create one and add it
+            var newPair: KeyArrayPair<string | number, any> = {
+                key: key,
+                array: [elem]
+            }
+            hashTable[key] = newPair;
+        } else {
+            //Otherwise, add the element to the existing KeyArrayPair hash table
+            pair.array.push(elem);
+        }
+    }
+
+    //Convert hash table to array and return it
+    var result = [];
+    for (var hash in hashTable) {
+        result.push(hashTable[hash]);
     }
     return result;
 }

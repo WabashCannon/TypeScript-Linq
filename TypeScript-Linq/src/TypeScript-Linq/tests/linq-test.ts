@@ -215,12 +215,46 @@ describe('Linq Tests',
             var getId = (elem: ITarget): number => elem.id;
             var target = testGroupArray.groupBy(getId);
 
-            expect(target.count()).toEqual(3);           
+            expect(target.count()).toEqual(3);
         });
 
         it('Array.groupBy has correct groups', () => {
             var getId = (elem: ITarget): number => elem.id;
             var target = testGroupArray.groupBy(getId);
+
+            //Define some utility functions for legible testing
+            var groupHasKey = (key: number) => {
+                return (group) => { return group.key == key; };
+            };
+            var targetHasId = (id: number) => {
+                return (target) => { return target.id == id; };
+            };
+            var expectTargetToHaveCorrectGroup = (key: number) => {
+                expect(
+                    target
+                        .first(groupHasKey(0))
+                        .array
+                ).toEqual(
+                    testGroupArray
+                        .where(targetHasId(0))
+                    );
+            };
+
+            expectTargetToHaveCorrectGroup(0);
+            expectTargetToHaveCorrectGroup(1);
+            expectTargetToHaveCorrectGroup(2);
+        });
+
+        it('Array.groupByHash has correct number of groups', () => {
+            var getId = (elem: ITarget): number => elem.id;
+            var target = testGroupArray.groupByHash(getId);
+
+            expect(target.count()).toEqual(3);
+        });
+
+        it('Array.groupByHash has correct groups', () => {
+            var getId = (elem: ITarget): number => elem.id;
+            var target = testGroupArray.groupByHash(getId);
 
             //Define some utility functions for legible testing
             var groupHasKey = (key: number) => {
