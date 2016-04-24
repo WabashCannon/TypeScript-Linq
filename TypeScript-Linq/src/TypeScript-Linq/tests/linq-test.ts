@@ -396,4 +396,41 @@ describe('Linq Tests',
             var target = left.singleJoin(right, leftKeyLambda, rightKeyLambda, joinLambda);
             expect(JSON.stringify(target)).toBe(JSON.stringify(expected));
         });
+
+        it('Array.groupJoin has correct elements on join', () => {
+            var left = testJoinArray;
+            var right = testGroupArray;
+
+            var leftKeyLambda = x => x.id;
+            var rightKeyLambda = x => x.id;
+
+            var expected = [
+                {
+                    key: { id: 0, name: 'fruit' },
+                    array: [
+                        { id: 0, name: 'apple' },
+                        { id: 0, name: 'bananna' },
+                        { id: 0, name: 'orange' }
+                    ]
+                },
+                {
+                    key: { id: 1, name: 'vegetable' },
+                    array: [
+                        { id: 1, name: 'carrot' },
+                        { id: 1, name: 'squash' },
+                        { id: 1, name: 'corn' }
+                    ]
+                },
+                {
+                    key: { id: 2, name: 'dairy' },
+                    array: [
+                        { id: 2, name: 'milk' },
+                        { id: 2, name: 'cheese' }
+                    ]
+                }
+            ];
+
+            var target = left.groupJoin(right, leftKeyLambda, rightKeyLambda);
+            expect(JSON.stringify(target)).toBe(JSON.stringify(expected));
+        });
     });

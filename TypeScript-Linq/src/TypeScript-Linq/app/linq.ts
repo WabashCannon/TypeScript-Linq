@@ -55,6 +55,15 @@ declare global {
          * @returns An array of joined elements as returned from the pair mapping lambda
          */
         singleJoin<R, K, O>(otherArray: Array<R>, selfKeyLambda: (T) => K, otherKeyLambda: (R) => K, pairMap: (T, R) => O): Array<O>;
+        /**
+         * Joins a group of elements of the provided array to each element of this array
+         * @param otherArray Array of elements to join to elements in this array
+         * @param selfKeyLambda Lambda that maps elements of this array into their joining key
+         * @param otherKeyLambda Lambda that maps elements of the other array into their joining key
+         * @returns An array of KeyArrayPairs with the keys corresponding to elements of this array and the pair's array
+         *  corresponding to the group of elements in otherArray with matching keys
+         */
+        groupJoin<R, K>(otherArray: Array<R>, selfKeyLambda: (T) => K, otherKeyLambda: (R) => K): Array<KeyArrayPair<T, R>>;
     }
 }
 
@@ -294,4 +303,21 @@ Array.prototype.singleJoin = function <R, K, O>(otherArray: Array<R>, selfKeyLam
     }
 
     return results;
+}
+
+Array.prototype.groupJoin = function <R, K>(otherArray: Array<R>, selfKeyLambda: (any) => K, otherKeyLambda: (R) => K): Array<KeyArrayPair<any, R>> {
+    //Group elements of the right
+    var rightGroups = otherArray.groupBy(otherKeyLambda);
+
+    //Define joining criteria
+    var getGroupKey = (group: KeyArrayPair<K, R>) => { return group.key; };
+    var createGroupJoinResult = (left: any, right: KeyArrayPair<K, R>): KeyArrayPair<any, R> => {
+        return {
+            key: left,
+            array: right.array
+        };
+    };
+
+    //Single join groups and return
+    return this.singleJoin(rightGroups, selfKeyLambda, getGroupKey, createGroupJoinResult);
 }
