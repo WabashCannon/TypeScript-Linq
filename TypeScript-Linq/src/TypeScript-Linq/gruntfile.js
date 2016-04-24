@@ -27,4 +27,12 @@ module.exports = function (grunt) {
         'ts:default'
     ]);
 
+    grunt.registerTask('test', [
+        'jasmine:default'
+    ])
+
+    grunt.registerTask('buildAndTest', [
+        'build','test'
+    ])
+
 };
