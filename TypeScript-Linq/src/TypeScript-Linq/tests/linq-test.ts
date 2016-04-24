@@ -152,4 +152,47 @@ describe('Linq Tests',
             expect(target).toEqual(6);
         });
 
+        it('Array.aggregate numeric summation works.', () => {
+            var summationAggregate = (aggregate: number, target: ITarget) => {
+                return aggregate + target.id;
+            }
+            var target = testArray.aggregate(summationAggregate);
+            expect(target).toEqual(15);
+        });
+
+        it('Array.aggregate string joining works.', () => {
+            var stringJoinAggregate = (aggregate: string, target: ITarget) => {
+                if (aggregate == null) return target.name;
+                return aggregate + ', ' + target.name;
+            }
+            var target = testArray.aggregate(stringJoinAggregate);
+            expect(target).toEqual('apple, bananna, carrot, date, egg, fig');
+        });
+
+        it('Array.aggregate numeric summation with inital aggregate value works', () => {
+            var summationAggregate = (aggregate: number, target: ITarget) => {
+                return aggregate + target.id;
+            }
+            var target = testArray.aggregate(summationAggregate, 20);
+            expect(target).toEqual(35);
+        });
+
+        it('Array.sum adds numeric array without predicate', () => {
+            var testArray = [0, 1, 2, 3, 4, 5];
+            var target = testArray.sum();
+            expect(target).toEqual(15);
+        });
+
+        it('Array.sum adds numeric values with a lambda', () => {
+            var getId = (elem: ITarget): number => elem.id;
+            var target = testArray.sum(getId);
+            expect(target).toEqual(15);
+        });
+
+        it('Array.sum adds string values with a lambda', () => {
+            var getName = (elem: ITarget): string => elem.name;
+            var target = testArray.sum(getName);
+            expect(target).toEqual('applebanannacarrotdateeggfig');
+        });
+
     });
